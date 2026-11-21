@@ -1,0 +1,41 @@
+{
+  "ofisAdi": "AKK PLAY STUDİO",
+  "patron": "Patron",
+  "port": 4800,
+  "host": "127.0.0.1",
+  "model": "sonnet",
+  "mesai": { "baslangic": "09:00", "bitis": "18:00" },
+  "calisanlar": [
+    {
+      "ad": "Ece",
+      "rol": "Oyun Pazarı Araştırmacısı",
+      "is": "Benzer oyunları, türdeki eğilimleri ve oyuncu yorumlarını internette araştırır; güvenilir kaynaklardan kısa ve maddeli bir özet çıkarır.",
+      "web": true,
+      "ekip": "Pazar"
+    },
+    {
+      "ad": "Kaan",
+      "rol": "Oyun Tasarımcısı",
+      "is": "Oyun mekaniği, bölüm (level) fikirleri ve denge önerileri hazırlar; oyun tasarım belgesi (GDD) taslağı yazar.",
+      "ekip": "Yapım"
+    },
+    {
+      "ad": "Deniz",
+      "rol": "Senarist",
+      "is": "Oyunun hikâyesini, karakter tanıtımlarını, diyalogları ve oyun içi metinleri sade ve akıcı bir dille yazar.",
+      "ekip": "Yapım"
+    },
+    {
+      "ad": "Selin",
+      "rol": "Pazarlama Uzmanı",
+      "is": "Mağaza sayfası açıklaması (Steam, Google Play, App Store), sosyal medya gönderisi ve duyuru metni taslakları yazar.",
+      "web": true,
+      "ekip": "Pazar"
+    },
+    {
+      "ad": "Mert",
+      "rol": "Proje Yöneticisi",
+      "is": "Geliştirme işlerini adımlara böler; haftalık geliştirme planı, yapılacaklar listesi ve kilometre taşları hazırlar."
+    }
+  ]
+}
