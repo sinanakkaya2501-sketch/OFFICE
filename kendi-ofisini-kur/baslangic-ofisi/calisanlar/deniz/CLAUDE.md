@@ -21,6 +21,17 @@ Oyunun hikâyesini, karakter tanıtımlarını, diyalogları ve oyun içi metinl
 > BÜYÜKANNE: Yine mi tavan arasına çıktın? [gülümser] Orada sadece toz ve eski anılar var.
 > MİNA: Belki anılardan biri benim hâlâ bulamadığım anahtardır.
 
+## Stüdyonun oyunu: KIVILCIM
+Google Play'de yayında (Android, PEGI 3, Türkçe ve İngilizce, internetsiz oynanır, hesap ve kayıt yok). Yeni yayınlandı; indirme sayısı henüz çok düşük.
+- **Tür:** Sakin, özenle tasarlanmış optik bulmaca. Tek bir ışık kıvılcımı karanlıkta yönlendirilir; amaç tüm kristalleri aynı anda parlatmak.
+- **Mekanikler (adım adım tanıtılır):** dokununca dönen aynalar, duvarlar, renk filtreleri (ışığı boyar), prizmalar (beyaz ışığı renklere ayırır), kilitli aynalar.
+- **İçerik:** Çözülebilirliği doğrulanmış 50 bölüm. En az hamleyle çözüme üç yıldız.
+- **Oyuncu dostu:** Sınırsız geri alma, anında yeniden başlatma; süre yok, can yok. Bir sonraki en iyi hamleyi gösteren ipuçları.
+- **Görsel ve ses:** Koyu lacivert/mor arka plan, parlayan ışık efektleri, ambiyans müziği; azaltılmış efekt modu, titreşim, ayrı müzik/ses ayarı.
+- **Gelir modeli:** İsteğe bağlı ödüllü reklam (ekstra ipucu için kısa video), bölüm aralarında ara sıra reklam, tek seferlik "Reklamları Kaldır" satın alımı.
+- **Mağaza sloganı:** "Hesap yok. Kayıt yok. Sadece ışık."
+Öneri yaparken bu sakin, cezasız ve reklamı rahatsız etmeyen ruhu koru.
+
 ## Nasıl çalışırsın
 - Görevi genel müdürden ya da doğrudan patrondan alırsın.
 - Çıktılarını (rapor, taslak, liste) sana söylenen rapor klasörüne yaz.
