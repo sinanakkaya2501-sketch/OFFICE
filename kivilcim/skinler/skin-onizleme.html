@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>KIVILCIM Skin Önizleme</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, sans-serif; background: #d8dde0; }
+  #sahne { display: flex; gap: 48px; padding: 48px; align-items: flex-start; }
+  .kart { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .kart h2 { font-size: 22px; font-weight: 700; color: #1c2a31; }
+  .kart p { font-size: 14px; color: #4a5a62; max-width: 540px; text-align: center; }
+  .telefon { width: 540px; height: 1080px; border-radius: 36px; overflow: hidden;
+             box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+  body.tek #sahne { padding: 0; gap: 0; }
+  body.tek .kart h2, body.tek .kart p { display: none; }
+  body.tek .telefon { border-radius: 0; box-shadow: none; }
+</style>
+</head>
+<body>
+<div id="sahne"></div>
+<script>
+const TEMALAR = {
+  vadi: {
+    ad: 'Skin 1 · Yeşil Vadi (açık)',
+    not: 'Açık bej, desenli duvar kâğıdı; koyu yeşil başlık çubuğu. Işın yeşil, renkli camdan sonra amber; kristal amber parlar.',
+    durum: '#017561', durumYazi: '#ffffff',
+    baslik: '#008069', baslikYazi: '#ffffff', baslikAlt: 'rgba(255,255,255,.78)',
+    zemin: '#efeae2', desen: '#cfc6b8', desenOp: 0.55,
+    hucre: 'rgba(255,255,255,.55)', hucreKenar: 'rgba(0,0,0,.05)',
+    pano: 'rgba(255,255,255,.35)',
+    duvar: '#8d8577', duvarUst: '#a39b8c',
+    ayna: '#2f3b40', aynaParlak: '#ffffff', mil: '#008069',
+    isin1: '#00a884', isin2: '#ff9f1c', parlama: 4,
+    kristalSonuk: '#b9c4bf', kristalYanik: '#ff9f1c',
+    gelen: '#ffffff', gelenYazi: '#111b21', giden: '#d9fdd3', gidenYazi: '#111b21',
+    saat: '#667781', tik: '#53bdeb', gonderen: '#008069',
+    cip: '#ffffff', cipYazi: '#54656f',
+    alt: 'transparent', kapsul: '#ffffff', kapsulYazi: '#54656f', buton: '#00a884', butonIkon: '#ffffff',
+    ipucuHalka: '#00a884', golge: 'rgba(11,20,26,.13)'
+  },
+  gece: {
+    ad: 'Skin 2 · Gece Sohbeti (koyu)',
+    not: 'Neredeyse siyah lacivert zemin, silik desen; yeşil vurgu. Işın buz beyazı, kristaller neon yeşil.',
+    durum: '#1f2c34', durumYazi: '#e9edef',
+    baslik: '#1f2c34', baslikYazi: '#e9edef', baslikAlt: '#8696a0',
+    zemin: '#0b141a', desen: '#1c2a31', desenOp: 0.9,
+    hucre: 'rgba(255,255,255,.035)', hucreKenar: 'rgba(255,255,255,.05)',
+    pano: 'rgba(32,44,51,.55)',
+    duvar: '#2a3942', duvarUst: '#364852',
+    ayna: '#cfd8dc', aynaParlak: '#ffffff', mil: '#00a884',
+    isin1: '#e8fbff', isin2: '#25d366', parlama: 6,
+    kristalSonuk: '#33444d', kristalYanik: '#25d366',
+    gelen: '#202c33', gelenYazi: '#e9edef', giden: '#005c4b', gidenYazi: '#e9edef',
+    saat: '#8696a0', tik: '#53bdeb', gonderen: '#00a884',
+    cip: '#182229', cipYazi: '#8696a0',
+    alt: '#0b141a', kapsul: '#202c33', kapsulYazi: '#8696a0', buton: '#00a884', butonIkon: '#111b21',
+    ipucuHalka: '#25d366', golge: 'rgba(0,0,0,.4)'
+  }
+};
+
+// Izgara: 7 sütun x 9 satır, hücre 64px
+const GX = 46, GY = 244, H = 64, SUT = 7, SAT = 9;
+const mx = c => GX + H * c + H / 2, my = r => GY + H * r + H / 2;
+
+// Bölüm düzeni (oyunun kendi mekanikleri: ayna, duvar, filtre, kristal, kilitli ayna)
+const AYNALAR = [ {c:4,r:1,y:'\\'}, {c:4,r:4,y:'/'}, {c:1,r:4,y:'/'}, {c:5,r:6,y:'\\',ipucu:true}, {c:2,r:7,y:'/',kilit:true} ];
+const DUVARLAR = [ {c:2,r:2}, {c:6,r:3}, {c:3,r:6}, {c:0,r:6}, {c:6,r:0} ];
+const FILTRE = {c:3,r:4};
+const KRISTALLER = [ {c:1,r:7,yanik:true}, {c:6,r:8,yanik:false} ];
+const KAYNAK = {c:0,r:1};
+// Işın yolu: kaynak → (4,1) → (4,4) → filtre (3,4) → (1,4) → kristal (1,7)
+const YOL1 = [[mx(0)+18,my(1)],[mx(4),my(1)],[mx(4),my(4)],[mx(3),my(4)]];
+const YOL2 = [[mx(3),my(4)],[mx(1),my(4)],[mx(1),my(7)-18]];
+
+function desen(t, id) {
+  // Oyuna özgü doodle'lar: kıvılcım, elmas, ayna, ampul, yıldız, ay, nokta
+  const s = t.desen;
+  return `<pattern id="${id}" width="180" height="180" patternUnits="userSpaceOnUse">
+    <g fill="none" stroke="${s}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="${t.desenOp}">
+      <path d="M28 14 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4z"/>
+      <path d="M104 22 l12 14 -12 22 -12 -22z M92 36 h24"/>
+      <path d="M150 70 l22 -22"/><circle cx="161" cy="59" r="3"/>
+      <path d="M40 92 a14 14 0 1 1 18 13 v6 h-8 v-6 a14 14 0 0 1 -10 -13z M50 118 h8"/>
+      <path d="M118 112 l3 7 8 1 -6 5 2 8 -7 -4 -7 4 2 -8 -6 -5 8 -1z"/>
+      <path d="M160 150 a12 12 0 1 1 -10 -18 a9 9 0 0 0 10 18z"/>
+      <path d="M20 150 l24 0 M26 144 l12 12 M38 144 l-12 12"/>
+      <circle cx="80" cy="160" r="3"/><circle cx="140" cy="10" r="2.5"/><circle cx="70" cy="56" r="2.5"/>
+      <path d="M88 78 q10 -10 20 0 t20 0"/>
+    </g>
+  </pattern>`;
+}
+
+function aynaSvg(t, a) {
+  const x = mx(a.c), y = my(a.r), aci = a.y === '/' ? -45 : 45;
+  let s = `<g transform="translate(${x} ${y})">`;
+  if (a.ipucu) s += `<circle r="29" fill="none" stroke="${t.ipucuHalka}" stroke-width="3" stroke-dasharray="6 5"/>
+      <path d="M 18 -24 A 30 30 0 0 1 28 -6" fill="none" stroke="${t.ipucuHalka}" stroke-width="3" stroke-linecap="round"/>
+      <path d="M 22 -7 l6 2 4 -6" fill="none" stroke="${t.ipucuHalka}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  s += `<g transform="rotate(${aci})">
+      <rect x="-25" y="-4.5" width="50" height="9" rx="4.5" fill="${t.ayna}"/>
+      <rect x="-22" y="-3" width="44" height="2.2" rx="1.1" fill="${t.aynaParlak}" opacity=".7"/>
+    </g>
+    <circle r="5.5" fill="${t.mil}" stroke="${t.zemin}" stroke-width="2"/>`;
+  if (a.kilit) s += `<g transform="translate(17 17)">
+      <rect x="-8" y="-3" width="16" height="12" rx="3" fill="${t.gonderen}"/>
+      <path d="M-4.5 -3 v-3.5 a4.5 4.5 0 0 1 9 0 v3.5" fill="none" stroke="${t.gonderen}" stroke-width="2.4"/>
+    </g>`;
+  return s + '</g>';
+}
+
+function kristalSvg(t, k) {
+  const x = mx(k.c), y = my(k.r), renk = k.yanik ? t.kristalYanik : t.kristalSonuk;
+  let s = `<g transform="translate(${x} ${y})">`;
+  if (k.yanik) s += `<circle r="30" fill="url(#hale-${t.id})"/>`;
+  s += `<path d="M0 -21 L15 -6 L0 21 L-15 -6 Z" fill="${renk}" ${k.yanik ? 'filter="url(#parla-' + t.id + ')"' : ''}/>
+    <path d="M-15 -6 H15 M0 -21 L-5 -6 L0 21 L5 -6 Z" fill="none" stroke="${t.zemin}" stroke-opacity=".45" stroke-width="1.5"/>`;
+  return s + '</g>';
+}
+
+function isinSvg(t, yol, renk) {
+  const d = yol.map((p, i) => (i ? 'L' : 'M') + p[0] + ' ' + p[1]).join(' ');
+  return `<path d="${d}" fill="none" stroke="${renk}" stroke-width="12" stroke-opacity=".25" stroke-linejoin="round" filter="url(#bulanik-${t.id})"/>
+    <path d="${d}" fill="none" stroke="${renk}" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="${d}" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-opacity=".85" stroke-linejoin="round"/>`;
+}
+
+function balon(t, {x, y, w, h, gelen, satirlar, saat, gonderen, tik}) {
+  const renk = gelen ? t.gelen : t.giden, yazi = gelen ? t.gelenYazi : t.gidenYazi;
+  // kuyruklu konuşma balonu
+  const kuyruk = gelen
+    ? `M${x} ${y} h-10 q6 4 10 14 z`
+    : `M${x + w} ${y} h10 q-6 4 -10 14 z`;
+  let s = `<g filter="url(#golge-${t.id})"><path d="${kuyruk}" fill="${renk}"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="9" fill="${renk}"/></g>`;
+  let ty = y + 22;
+  if (gonderen) { s += `<text x="${x + 12}" y="${ty}" font-size="13.5" font-weight="600" fill="${t.gonderen}">${gonderen}</text>`; ty += 20; }
+  satirlar.forEach(sat => { s += `<text x="${x + 12}" y="${ty}" font-size="15" fill="${yazi}">${sat}</text>`; ty += 20; });
+  s += `<text x="${x + w - (tik ? 32 : 10)}" y="${y + h - 8}" font-size="11" fill="${t.saat}" text-anchor="end">${saat}</text>`;
+  if (tik) s += `<path d="M${x + w - 28} ${y + h - 13} l3.5 3.5 6 -7 M${x + w - 22} ${y + h - 9.5} l0 0 6 -7" fill="none" stroke="${t.tik}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+  return s;
+}
+
+function ekran(anahtar) {
+  const t = { ...TEMALAR[anahtar], id: anahtar };
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" width="540" height="1080" viewBox="0 0 540 1080" font-family="Inter, sans-serif">
+  <defs>
+    ${desen(t, 'desen-' + anahtar)}
+    <filter id="bulanik-${anahtar}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${t.parlama}"/></filter>
+    <filter id="parla-${anahtar}" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="golge-${anahtar}" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="1" stdDeviation=".6" flood-color="${t.golge}" flood-opacity="1"/></filter>
+    <radialGradient id="hale-${anahtar}"><stop offset="0" stop-color="${t.kristalYanik}" stop-opacity=".55"/><stop offset="1" stop-color="${t.kristalYanik}" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="540" height="1080" fill="${t.zemin}"/>
+  <rect width="540" height="1080" fill="url(#desen-${anahtar})"/>`;
+
+  // durum çubuğu
+  s += `<rect width="540" height="30" fill="${t.durum}"/>
+    <text x="20" y="21" font-size="13" font-weight="600" fill="${t.durumYazi}">14:32</text>
+    <g fill="${t.durumYazi}"><rect x="470" y="11" width="22" height="10" rx="2.5" fill="none" stroke="${t.durumYazi}" stroke-width="1.5"/><rect x="472" y="13" width="15" height="6" rx="1"/><rect x="493" y="14" width="2" height="4" rx="1"/>
+    <path d="M444 21 h4 v-3 h-4z M450 21 h4 v-6 h-4z M456 21 h4 v-9 h-4z"/></g>`;
+
+  // başlık çubuğu (sohbet başlığı gibi)
+  s += `<rect y="30" width="540" height="64" fill="${t.baslik}"/>
+    <path d="M30 62 h-14 m7 -7 l-7 7 7 7" fill="none" stroke="${t.baslikYazi}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="62" cy="62" r="20" fill="${anahtar === 'vadi' ? '#0b141a' : '#00a884'}"/>
+    <path d="M62 48 l3.5 9 9 3.5 -9 3.5 -3.5 9 -3.5 -9 -9 -3.5 9 -3.5z" fill="${anahtar === 'vadi' ? '#ff9f1c' : '#ffffff'}"/>
+    <text x="92" y="57" font-size="17" font-weight="600" fill="${t.baslikYazi}">Bölüm 12 · Işık Yolu</text>
+    <text x="92" y="78" font-size="13" fill="${t.baslikAlt}">1/2 kristal parlıyor · 4 hamle</text>
+    <g fill="none" stroke="${t.baslikYazi}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M447 70 v-2 a9 9 0 1 1 9 0 v2 z M449 75 h5"/>
+      <path d="M484 52 l2.4 5 5.4 .8 -3.9 3.8 .9 5.4 -4.8 -2.6 -4.8 2.6 .9 -5.4 -3.9 -3.8 5.4 -.8z"/>
+    </g>
+    <g fill="${t.baslikYazi}"><circle cx="518" cy="54" r="2.2"/><circle cx="518" cy="62" r="2.2"/><circle cx="518" cy="70" r="2.2"/></g>`;
+
+  // tarih çipi
+  s += `<g filter="url(#golge-${anahtar})"><rect x="185" y="110" width="170" height="28" rx="8" fill="${t.cip}"/></g>
+    <text x="270" y="129" font-size="12.5" font-weight="600" fill="${t.cipYazi}" text-anchor="middle" letter-spacing=".6">HEDEF: 5 HAMLE ★★★</text>`;
+
+  // üst gelen balon
+  s += balon(t, { x: 24, y: 154, w: 300, h: 68, gelen: true, gonderen: 'Kıvılcım',
+    satirlar: ['Tüm kristaller aynı anda parlamalı.'], saat: '14:30' });
+
+  // oyun panosu
+  s += `<rect x="${GX - 10}" y="${GY - 10}" width="${SUT * H + 20}" height="${SAT * H + 20}" rx="18" fill="${t.pano}"/>`;
+  for (let r = 0; r < SAT; r++) for (let c = 0; c < SUT; c++)
+    s += `<rect x="${GX + c * H + 3}" y="${GY + r * H + 3}" width="${H - 6}" height="${H - 6}" rx="10" fill="${t.hucre}" stroke="${t.hucreKenar}"/>`;
+
+  DUVARLAR.forEach(d => {
+    s += `<rect x="${GX + d.c * H + 5}" y="${GY + d.r * H + 5}" width="${H - 10}" height="${H - 10}" rx="9" fill="${t.duvar}"/>
+      <rect x="${GX + d.c * H + 5}" y="${GY + d.r * H + 5}" width="${H - 10}" height="${(H - 10) / 2}" rx="9" fill="${t.duvarUst}" opacity=".6"/>`;
+  });
+
+  // ışın
+  s += isinSvg(t, YOL1, t.isin1) + isinSvg(t, YOL2, t.isin2);
+
+  // kaynak
+  s += `<g transform="translate(${mx(KAYNAK.c)} ${my(KAYNAK.r)})">
+      <rect x="-22" y="-18" width="40" height="36" rx="10" fill="${t.gonderen}"/>
+      <circle cx="10" cy="0" r="7" fill="${t.isin1}" filter="url(#parla-${anahtar})"/>
+      <path d="M-12 -7 l3 7 -3 7" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+    </g>`;
+
+  // filtre (renkli cam)
+  s += `<g transform="translate(${mx(FILTRE.c)} ${my(FILTRE.r)})">
+      <rect x="-7" y="-24" width="14" height="48" rx="5" fill="${t.isin2}" opacity=".55" stroke="${t.isin2}" stroke-width="2"/>
+    </g>`;
+
+  AYNALAR.forEach(a => s += aynaSvg(t, a));
+  KRISTALLER.forEach(k => s += kristalSvg(t, k));
+
+  // alt balonlar
+  s += balon(t, { x: 236, y: 846, w: 280, h: 46, gelen: false,
+    satirlar: ['4 hamle yaptım, 1 kristal kaldı'], saat: '14:32', tik: true });
+  s += balon(t, { x: 24, y: 906, w: 340, h: 70, gelen: true, gonderen: 'İpucu',
+    satirlar: ['Halkalı aynayı bir kez çevir.'], saat: '14:32' });
+
+  // alt çubuk (mesaj yazma alanı gibi)
+  s += `<rect y="994" width="540" height="86" fill="${t.alt}"/>
+    <g filter="url(#golge-${anahtar})"><rect x="12" y="1004" width="446" height="52" rx="26" fill="${t.kapsul}"/></g>
+    <g fill="none" stroke="${t.kapsulYazi}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M44 1024 h14 a8 8 0 0 1 0 16 h-10 M44 1024 l6 -6 M44 1024 l6 6"/>
+      <path d="M187 1030 a10 10 0 1 1 -3 -7 M186 1017 v7 h-7"/>
+    </g>
+    <text x="74" y="1035" font-size="15" fill="${t.kapsulYazi}">Geri al</text>
+    <text x="200" y="1035" font-size="15" fill="${t.kapsulYazi}">Baştan</text>
+    <line x1="290" y1="1018" x2="290" y2="1042" stroke="${t.kapsulYazi}" stroke-opacity=".3" stroke-width="1.5"/>
+    <text x="306" y="1035" font-size="15" fill="${t.kapsulYazi}">İpucu: 2</text>
+    <g fill="none" stroke="${t.kapsulYazi}" stroke-width="2" stroke-linecap="round"><path d="M428 1022 v18 M419 1031 h18"/></g>
+    <circle cx="496" cy="1030" r="26" fill="${t.buton}"/>
+    <path d="M488 1039 v-2 a11 11 0 1 1 16 0 v2 z M490 1045 h12" fill="none" stroke="${t.butonIkon}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+  return s + '</svg>';
+}
+
+const tek = new URLSearchParams(location.search).get('tema');
+if (tek) document.body.classList.add('tek');
+const sahne = document.getElementById('sahne');
+(tek ? [tek] : ['vadi', 'gece']).forEach(k => {
+  const kart = document.createElement('div');
+  kart.className = 'kart';
+  kart.innerHTML = `<h2>${TEMALAR[k].ad}</h2><div class="telefon">${ekran(k)}</div><p>${TEMALAR[k].not}</p>`;
+  sahne.appendChild(kart);
+});
+</script>
+</body>
+</html>
