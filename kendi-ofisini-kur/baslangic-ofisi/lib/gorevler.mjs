@@ -248,13 +248,15 @@ export class GorevKutusu extends EventEmitter {
     g.durum = 'calisiyor';
     this._degisti(g);
 
-    let onceki = '';
+    // Zincirdeki her adım, önceki bütün adımların raporlarını alır (ör. son adımdaki derleyici herkesi görür).
+    const oncekiler = [];
     for (let i = 0; i < g.adimlar.length; i++) {
       if (this._durdurulan.has(g.id)) break;
       const a = g.adimlar[i];
-      await this._adim(g, a, i, onceki);
+      await this._adim(g, a, i, oncekiler);
       if (a.durum !== 'bitti') break;
-      onceki = a.rapor ?? '';
+      const ad = this.ayar.calisanlar.find(c => c.id === a.birim)?.ad ?? a.birim;
+      oncekiler.push({ sira: i + 1, ad, rapor: a.rapor ?? '' });
     }
 
     const hatali = g.adimlar.find(a => a.durum === 'hata');
@@ -297,7 +299,7 @@ export class GorevKutusu extends EventEmitter {
     return plan;
   }
 
-  async _adim(g, a, i, onceki) {
+  async _adim(g, a, i, oncekiler = []) {
     const c = this._calisan(a.birim);
     const klasor = path.join(this.kok, 'calisanlar', c.id);
     const ad = `${bugun()}-gorev-${g.id}${g.adimlar.length > 1 ? `-${i + 1}` : ''}`;
@@ -315,7 +317,9 @@ export class GorevKutusu extends EventEmitter {
 
     let girdi = `Görev: ${a.gorev}`;
     if (g.hedef === 'otomatik' && a.gorev !== g.metin) girdi += `\n\nPatronun asıl isteği: ${g.metin}`;
-    if (onceki) girdi += `\n\nÖnceki adımın raporu:\n${onceki.slice(0, ONCEKI_RAPOR)}`;
+    const dolu = oncekiler.filter(o => o.rapor);
+    if (dolu.length === 1) girdi += `\n\nÖnceki adımın raporu (${dolu[0].ad}):\n${dolu[0].rapor.slice(0, ONCEKI_RAPOR)}`;
+    else if (dolu.length > 1) girdi += `\n\nÖnceki adımların raporları:` + dolu.map(o => `\n\n### ${o.sira}. adım: ${o.ad}\n${o.rapor.slice(0, ONCEKI_RAPOR)}`).join('');
     const ek = kurallar(c, this.ayar, raporRel);
 
     let r = null, rapor = '', hata = '';

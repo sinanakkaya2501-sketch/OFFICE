@@ -116,6 +116,17 @@ test('çok adımlı planda önceki rapor sonraki adıma geçer', async () => {
   assert.ok(ikinci.includes('Önceki adımın raporu') && ikinci.includes('ADIM RAPORU'), ikinci);
 });
 
+test('zincirin son adımı önceki bütün adımların raporlarını alır', async () => {
+  const { kok, kutu } = ofis();
+  const plan = { ozet: 'üç adım', adimlar: [{ birim: 'arastirmaci', gorev: 'Araştır' }, { birim: 'yazar', gorev: 'Yaz' }, { birim: 'yazar', gorev: 'Topla' }] };
+  const son = await ortamla({ SAHTE_PLAN: JSON.stringify(plan), SAHTE_RAPOR: 'ADIM RAPORU', GIRDI_YAZ: '1' }, () => sonDurum(kutu, kutu.olustur({ metin: 'Araştır, yaz, topla' }).id));
+  assert.equal(son.durum, 'bitti', son.hata);
+  const ucuncu = raporOku(kok, son.adimlar[2]);
+  const girdi = ucuncu.slice(ucuncu.indexOf('GİRDİ:'));
+  assert.ok(girdi.includes('Önceki adımların raporları'), girdi);
+  assert.ok(girdi.includes('### 1. adım: Araştırmacı') && girdi.includes('### 2. adım: Yazar'), girdi);
+});
+
 test('genel müdür en çok 5 adım planlar', async () => {
   const { kutu } = ofis();
   const plan = { ozet: 'uzun', adimlar: Array.from({ length: 8 }, () => ({ birim: 'yazar', gorev: 'Yaz' })) };

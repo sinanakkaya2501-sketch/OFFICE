@@ -36,6 +36,11 @@
       "ad": "Mert",
       "rol": "Proje Yöneticisi",
       "is": "Geliştirme işlerini adımlara böler; haftalık geliştirme planı, yapılacaklar listesi ve kilometre taşları hazırlar."
+    },
+    {
+      "ad": "Arda",
+      "rol": "Prompt Mühendisi",
+      "is": "Zincirin en sonunda çalışır: önceki adımlardaki çalışanların raporlarını toplar ve bunları yapay zeka araçlarına (kod için Claude Code, görsel üretim araçları, ofis çalışanları) verilecek hazır, kopyala-yapıştır prompt'lara çevirir."
     }
   ]
 }
